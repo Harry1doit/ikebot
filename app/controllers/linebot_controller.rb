@@ -1,5 +1,6 @@
 class LinebotController < ApplicationController
   require 'line/bot' 
+  require 'open-uri'
 
   protect_from_forgery :except => [:callback]
 
@@ -8,6 +9,15 @@ class LinebotController < ApplicationController
       config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
       config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
     }
+  end
+  
+  def return_message
+    open("http://www.meigensyu.com/quotations/view/random") do |file|
+      page = file.read
+      page.scan(/<div class=\"text\">(.*?)<\/div>/).each do |meigen|
+        return meigen[0].encode("sjis")
+      end
+    end
   end
 
   def callback
@@ -27,7 +37,7 @@ class LinebotController < ApplicationController
         when Line::Bot::Event::MessageType::Text
           message = {
             type: 'text',
-            text: event.message['text']
+            text: return_message
           }
           client.reply_message(event['replyToken'], message)
         end
